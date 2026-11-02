@@ -9,7 +9,11 @@ WORKDIR /app
 
 # Install dependencies first so this layer is cached between builds.
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Install the app dependencies, then remove the packaging tooling (pip, setuptools, wheel).
+# It is not needed at runtime, and removing it also removes the vendored copies of
+# urllib3/msgpack/etc. that Trivy would otherwise flag in the final image.
+RUN pip install -r requirements.txt \
+ && pip uninstall -y pip setuptools wheel
 
 COPY src/ .
 
