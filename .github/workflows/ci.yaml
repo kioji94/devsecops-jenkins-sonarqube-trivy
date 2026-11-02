@@ -128,7 +128,8 @@ jobs:
           echo "::add-mask::${token}"
           echo "SONAR_TOKEN=${token}" >> "$GITHUB_ENV"
 
-      # Runs as the runner's uid so the scanner can write .scannerwork into the workspace.
+      # Runs as the runner's uid. The scanner image defaults its working dir to /tmp/.scannerwork,
+      # which already exists in the image owned by another uid, so point it at the workspace instead.
       - name: Scan and wait for the quality gate
         run: |
           docker run --rm --network host \
@@ -138,6 +139,7 @@ jobs:
             -e SONAR_TOKEN \
             -v "$GITHUB_WORKSPACE:/usr/src" \
             sonarsource/sonar-scanner-cli \
+            -Dsonar.working.directory=/usr/src/.scannerwork \
             -Dsonar.qualitygate.wait=true
 
       - name: SonarQube logs (on failure)
