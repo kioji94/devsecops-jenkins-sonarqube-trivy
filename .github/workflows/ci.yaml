@@ -27,7 +27,7 @@ jobs:
     name: Lint (ruff, shellcheck, compose)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -57,7 +57,7 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -85,7 +85,7 @@ jobs:
     name: SonarQube analysis + quality gate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0 # full history gives SonarQube accurate blame / new-code detection
 
@@ -151,7 +151,7 @@ jobs:
       contents: read
       security-events: write # only used to upload SARIF on public repositories
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Trivy is installed from the official release and verified against its published checksums.
       - name: Install Trivy ${{ env.TRIVY_VERSION }}
@@ -223,7 +223,7 @@ jobs:
     name: Build Jenkins image (tooling check)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Build
         run: docker build -t devsecops-jenkins:ci ./jenkins
