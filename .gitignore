@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Pipeline output
+reports/
+.scannerwork/
+
+# Local secrets / environment (never commit)
+.env
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,6 @@
+# Accepted risks for Trivy. Keep this file EMPTY unless you can justify an entry.
+# One finding per line; always add an expiry so the exception is re-reviewed:
+#
+#   CVE-2099-00000 exp:2027-01-31
+#
+# Document the reason in the commit message / pull request that adds the line.

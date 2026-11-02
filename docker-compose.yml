@@ -1,0 +1,88 @@
+name: devsecops-lab
+
+services:
+  sonarqube-db:
+    image: postgres:17-alpine
+    container_name: sonarqube-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env (run scripts/setup-host.sh)}
+      POSTGRES_DB: sonarqube
+    volumes:
+      - sonarqube_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - devsecops
+
+  sonarqube:
+    image: sonarqube:${SONARQUBE_TAG:-26.10.0.133078-community}
+    container_name: sonarqube
+    restart: unless-stopped
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${SONARQUBE_PORT:-9000}:9000"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+      nproc: 8192
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://localhost:9000/api/system/status | grep -q '"status":"UP"'
+      interval: 20s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    networks:
+      - devsecops
+
+  jenkins:
+    build:
+      context: ./jenkins
+      args:
+        TRIVY_VERSION: ${TRIVY_VERSION:-0.76.1}
+        SONAR_SCANNER_VERSION: ${SONAR_SCANNER_VERSION:-8.1.0.6389}
+    image: devsecops-jenkins:local
+    container_name: jenkins
+    restart: unless-stopped
+    # Lets the unprivileged jenkins user talk to the HOST Docker daemon through the mounted socket.
+    group_add:
+      - "${DOCKER_GID:?Set DOCKER_GID in .env (run scripts/setup-host.sh)}"
+    ports:
+      - "${JENKINS_PORT:-8080}:8080"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - trivy_cache:/var/trivy-cache
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - devsecops
+
+# Fixed network name: the pipeline attaches the deployed app to it so Jenkins can smoke-test it by name.
+networks:
+  devsecops:
+    name: devsecops
+
+volumes:
+  sonarqube_db:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  jenkins_home:
+  trivy_cache:
