@@ -7,6 +7,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Pull in Debian security patches published after the base image was built
+# (e.g. zlib1g CVEs flagged by Trivy), then drop the apt cache to keep the image small.
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies first so this layer is cached between builds.
 COPY requirements.txt .
 # Install the app dependencies, then remove the packaging tooling (pip, setuptools, wheel).
